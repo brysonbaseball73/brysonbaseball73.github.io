@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Manage Baseball</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #0a1628;
+            color: #f0eada;
+            font-family: Georgia, serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            font-family: Impact, sans-serif;
+            color: #d4a843;
+            text-align: center;
+            font-size: 2.5rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            background-color: #111d2b;
+            border: 2px solid #d4a843;
+            border-radius: 6px;
+            padding: 15px 20px;
+            max-width: 700px;
+            margin: 0 auto 15px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .score-box h3 {
+            font-family: Impact, sans-serif;
+            color: #d4a843;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .score-box .score-val {
+            font-family: Impact, sans-serif;
+            font-size: 2rem;
+            color: #f0eada;
+        }
+
+        /* Inning row */
+        .inning-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            max-width: 700px;
+            margin: 0 auto 15px auto;
+            background: #111d2b;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-family: Impact, sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .inning-row span { color: #d4a843; margin-right: 5px; }
+
+        /* Field area */
+        .field-area {
+            max-width: 700px;
+            margin: 0 auto 15px auto;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .diamond-wrap {
+            flex: 1;
+            background: #111d2b;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .panel-title {
+            font-family: Impact, sans-serif;
+            color: #d4a843;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .diamond {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .base {
+            width: 26px;
+            height: 26px;
+            background: #1e3a5f;
+            border: 2px solid #444;
+            border-radius: 3px;
+            position: absolute;
+            transform: rotate(45deg);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .base.occupied { background: #d4a843; border-color: #d4a843; }
+        .base-second { top: 5px; left: 57px; }
+        .base-first  { top: 57px; right: 5px; }
+        .base-home   { bottom: 5px; left: 57px; }
+        .base-third  { top: 57px; left: 5px; }
+
+        /* Count panel */
+        .count-panel {
+            flex: 1;
+            background: #111d2b;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+        }
+
+        .dots-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .dots-row label {
+            font-size: 0.8rem;
+            color: #888;
+            width: 50px;
+            font-family: Impact, sans-serif;
+            letter-spacing: 0.05em;
+        }
+
+        .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1e3a5f;
+            border: 2px solid #444;
+            transition: background 0.2s;
+        }
+
+        .dot.ball-on  { background: #2d7a2d; border-color: #2d7a2d; }
+        .dot.strike-on{ background: #c8102e; border-color: #c8102e; }
+        .dot.out-on   { background: #888;    border-color: #888; }
+
+        /* Batter info */
+        .batter-panel {
+            max-width: 700px;
+            margin: 0 auto 15px auto;
+            background: #111d2b;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .batter-name {
+            font-family: Impact, sans-serif;
+            font-size: 1.3rem;
+            color: #f0eada;
+            letter-spacing: 0.05em;
+        }
+
+        .batter-avg {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .batter-stats {
+            text-align: right;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .batter-stats span {
+            color: #d4a843;
+            font-family: Impact, sans-serif;
+            font-size: 1rem;
+        }
+
+        /* Decision buttons */
+        .decisions {
+            max-width: 700px;
+            margin: 0 auto 15px auto;
+        }
+
+        .decisions h3 {
+            font-family: Impact, sans-serif;
+            color: #d4a843;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            background: #1e3a5f;
+            border: 2px solid #2d5a8f;
+            color: #f0eada;
+            font-family: Impact, sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 12px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.1s;
+        }
+
+        .btn:hover  { background: #2d5a8f; border-color: #d4a843; transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .btn.red { background: #5a1020; border-color: #c8102e; }
+        .btn.red:hover { background: #7a1a30; }
+
+        .btn.gold { background: #4a3800; border-color: #d4a843; color: #d4a843; }
+        .btn.gold:hover { background: #6a5200; }
+
+        /* Log */
+        .log-box {
+            max-width: 700px;
+            margin: 0 auto 15px auto;
+            background: #111d2b;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 12px 15px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .log-box p { border-bottom: 1px solid #1a2a3a; padding-bottom: 3px; margin-bottom: 3px; }
+        .log-box p:last-child { border: none; }
+        .log-good { color: #2d7a2d; }
+        .log-bad  { color: #c8102e; }
+        .log-info { color: #d4a843; }
+
+        /* Game over overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .overlay.show { display: flex; }
+
+        .overlay-box {
+            background: #111d2b;
+            border: 3px solid #d4a843;
+            border-radius: 10px;
+            padding: 40px 50px;
+            text-align: center;
+        }
+
+        .overlay-box h2 {
+            font-family: Impact, sans-serif;
+            font-size: 2.5rem;
+            color: #d4a843;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .overlay-box p {
+            font-size: 1.1rem;
+            color: #f0eada;
+            margin-bottom: 20px;
+        }
+
+        .nav-link {
+            display: block;
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .nav-link a {
+            color: #888;
+            font-family: Impact, sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+
+        .nav-link a:hover { color: #d4a843; }
+    </style>
+</head>
+<body>
+
+    <h1>⚾ Quick Manage</h1>
+    <p class="subtitle">You're the manager. Every decision counts.</p>
+
+    <!-- Scoreboard -->
+    <div class="scoreboard">
+        <div class="score-box">
+            <h3>Your Team</h3>
+            <div class="score-val" id="my-score">0</div>
+        </div>
+        <div class="score-box">
+            <h3>Inning</h3>
+            <div class="score-val" id="inning-display">1</div>
+        </div>
+        <div class="score-box">
+            <h3>Opponent</h3>
+            <div class="score-val" id="opp-score">0</div>
+        </div>
+    </div>
+
+    <!-- Inning info -->
+    <div class="inning-row">
+        <div><span>Half:</span><span id="half-display">TOP</span></div>
+        <div><span>Outs:</span><span id="outs-display">0</span></div>
+        <div><span>Pitcher ERA:</span><span id="era-display">3.50</span></div>
+    </div>
+
+    <!-- Diamond + Count -->
+    <div class="field-area">
+        <div class="diamond-wrap">
+            <div class="panel-title">Bases</div>
+            <div class="diamond">
+                <div class="base base-second" id="base-2"></div>
+                <div class="base base-first"  id="base-1"></div>
+                <div class="base base-home"   id="base-home"></div>
+                <div class="base base-third"  id="base-3"></div>
+            </div>
+        </div>
+        <div class="count-panel">
+            <div class="panel-title">Count</div>
+            <div class="dots-row">
+                <label>Balls</label>
+                <div class="dot" id="b1"></div>
+                <div class="dot" id="b2"></div>
+                <div class="dot" id="b3"></div>
+            </div>
+            <div class="dots-row">
+                <label>Strikes</label>
+                <div class="dot" id="s1"></div>
+                <div class="dot" id="s2"></div>
+            </div>
+            <div class="dots-row">
+                <label>Outs</label>
+                <div class="dot" id="o1"></div>
+                <div class="dot" id="o2"></div>
+                <div class="dot" id="o3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batter -->
+    <div class="batter-panel">
+        <div>
+            <div class="batter-name" id="batter-name">Loading...</div>
+            <div class="batter-avg" id="batter-avg">AVG: .000</div>
+        </div>
+        <div class="batter-stats">
+            AB this game: <span id="batter-ab">0</span><br>
+            Hits this game: <span id="batter-hits">0</span>
+        </div>
+    </div>
+
+    <!-- Decision buttons -->
+    <div class="decisions">
+        <h3>Your Call, Manager</h3>
+        <div class="btn-grid">
+            <button class="btn" onclick="decision('swing')">⚾ Swing Away</button>
+            <button class="btn" onclick="decision('take')">👁️ Take the Pitch</button>
+            <button class="btn" onclick="decision('bunt')">📐 Bunt</button>
+            <button class="btn" onclick="decision('steal')">💨 Steal a Base</button>
+            <button class="btn red" onclick="decision('hitrun')">🏃 Hit & Run</button>
+            <button class="btn gold" onclick="decision('pinch')">🔄 Pinch Hitter</button>
+        </div>
+    </div>
+
+    <!-- Play log -->
+    <div class="log-box" id="log-box">
+        <p class="log-info">⚾ Game started. You're managing the home team. Good luck!</p>
+    </div>
+
+    <div class="nav-link">
+        <a href="index.html">← Back to Home</a>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div class="overlay" id="overlay">
+        <div class="overlay-box">
+            <h2 id="overlay-title">Game Over</h2>
+            <p id="overlay-msg">Final score: 0 - 0</p>
+            <button class="btn gold" onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+<script>
+    // ── Rosters ──────────────────────────────────────────────
+    const myRoster = [
+        { name: "Mike Trout",     avg: 0.302, power: 0.30 },
+        { name: "Freddie Freeman",avg: 0.288, power: 0.25 },
+        { name: "Mookie Betts",   avg: 0.275, power: 0.22 },
+        { name: "Rafael Devers",  avg: 0.268, power: 0.28 },
+        { name: "Yordan Alvarez", avg: 0.290, power: 0.35 },
+        { name: "Austin Riley",   avg: 0.255, power: 0.26 },
+        { name: "Xander Bogaerts",avg: 0.260, power: 0.18 },
+        { name: "William Contreras", avg: 0.248, power: 0.20 },
+        { name: "Trea Turner",    avg: 0.278, power: 0.15 },
+    ];
+
+    const pinchHitters = [
+        { name: "J.D. Martinez", avg: 0.270, power: 0.28 },
+        { name: "Jorge Soler",   avg: 0.245, power: 0.32 },
+    ];
+
+    // ── Game State ───────────────────────────────────────────
+    let state = {};
+
+    function initState() {
+        state = {
+            myScore: 0,
+            oppScore: 0,
+            inning: 1,
+            half: "TOP",       // TOP = opponent batting, BOT = player batting
+            outs: 0,
+            balls: 0,
+            strikes: 0,
+            bases: [false, false, false], // 1st, 2nd, 3rd
+            batterIndex: 0,
+            roster: [...myRoster],
+            pinchAvail: [...pinchHitters],
+            pitcherERA: 3.50,
+            batterAB: new Array(myRoster.length).fill(0),
+            batterHits: new Array(myRoster.length).fill(0),
+            gameOver: false,
+        };
+        updateUI();
+        log("⚾ Game started. You're managing the home team. Good luck!", "log-info");
+    }
+
+    // ── Logging ──────────────────────────────────────────────
+    function log(msg, cls = "") {
+        const box = document.getElementById("log-box");
+        const p = document.createElement("p");
+        if (cls) p.className = cls;
+        p.textContent = msg;
+        box.prepend(p);
+    }
+
+    // ── UI Update ────────────────────────────────────────────
+    function updateUI() {
+        document.getElementById("my-score").textContent  = state.myScore;
+        document.getElementById("opp-score").textContent = state.oppScore;
+        document.getElementById("inning-display").textContent = state.inning;
+        document.getElementById("half-display").textContent   = state.half;
+        document.getElementById("outs-display").textContent   = state.outs;
+        document.getElementById("era-display").textContent    = state.pitcherERA.toFixed(2);
+
+        // Bases
+        document.getElementById("base-1").classList.toggle("occupied", state.bases[0]);
+        document.getElementById("base-2").classList.toggle("occupied", state.bases[1]);
+        document.getElementById("base-3").classList.toggle("occupied", state.bases[2]);
+
+        // Count dots
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById("b" + i).classList.toggle("ball-on", i <= state.balls);
+        }
+        for (let i = 1; i <= 2; i++) {
+            document.getElementById("s" + i).classList.toggle("strike-on", i <= state.strikes);
+        }
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById("o" + i).classList.toggle("out-on", i <= state.outs);
+        }
+
+        // Batter
+        if (state.half === "BOT") {
+            const b = state.roster[state.batterIndex];
+            document.getElementById("batter-name").textContent = b.name;
+            document.getElementById("batter-avg").textContent  = "AVG: " + b.avg.toFixed(3);
+            document.getElementById("batter-ab").textContent   = state.batterAB[state.batterIndex];
+            document.getElementById("batter-hits").textContent = state.batterHits[state.batterIndex];
+            setButtons(true);
+        } else {
+            document.getElementById("batter-name").textContent = "Opponent Batting";
+            document.getElementById("batter-avg").textContent  = "Simulating opponent at-bat...";
+            document.getElementById("batter-ab").textContent   = "-";
+            document.getElementById("batter-hits").textContent = "-";
+            setButtons(false);
+        }
+    }
+
+    function setButtons(enabled) {
+        document.querySelectorAll(".btn").forEach(b => b.disabled = !enabled);
+    }
+
+    // ── Advance Runners ──────────────────────────────────────
+    function advanceRunners(bases, hits) {
+        let runs = 0;
+        // hits = number of bases to advance
+        for (let h = 0; h < hits; h++) {
+            if (bases[2]) runs++;
+            bases[2] = bases[1];
+            bases[1] = bases[0];
+            bases[0] = false;
+        }
+        bases[hits - 1] = true; // batter lands on base
+        return runs;
+    }
+
+    // ── At-Bat Result ────────────────────────────────────────
+    function atBatResult(avg, power) {
+        const r = Math.random();
+        if (r < avg * 0.25)        return "homerun";
+        else if (r < avg * 0.55)   return "triple";
+        else if (r < avg * 0.75)   return "double";
+        else if (r < avg)          return "single";
+        else if (r < avg + 0.08)   return "walk";
+        else if (r < avg + 0.22)   return "strikeout";
+        else                        return "out";
+    }
+
+    // ── Opponent Half Inning ─────────────────────────────────
+    function simulateOpponentHalf() {
+        setButtons(false);
+        log("── Opponent batting (Top of inning " + state.inning + ") ──", "log-info");
+
+        let outs = 0, runs = 0;
+        let bases = [false, false, false];
+        const oppAvg = 0.240 + Math.random() * 0.04;
+
+        while (outs < 3) {
+            const result = atBatResult(oppAvg, 0.20);
+            if (result === "homerun") {
+                let r = 1;
+                if (bases[2]) r++;
+                if (bases[1]) r++;
+                if (bases[0]) r++;
+                runs += r;
+                bases = [false, false, false];
+                log("Opponent hits a HOME RUN! " + r + " run(s) score.", "log-bad");
+            } else if (result === "triple") {
+                let r = 0;
+                if (bases[2]) r++;
+                if (bases[1]) r++;
+                if (bases[0]) r++;
+                runs += r;
+                bases = [false, false, true];
+                log("Opponent hits a triple!" + (r ? " " + r + " run(s) score." : ""), "log-bad");
+            } else if (result === "double") {
+                runs += advanceRunners(bases, 2) - (bases[2] ? 0 : 0);
+                // simpler: just advance
+                let r = bases[2] ? 1 : 0; if (bases[1]) r++;
+                runs += r;
+                bases[2] = bases[0]; bases[1] = true; bases[0] = false;
+                log("Opponent hits a double." + (r ? " " + r + " run(s) score." : ""), "log-bad");
+            } else if (result === "single") {
+                let r = bases[2] ? 1 : 0;
+                runs += r;
+                bases[2] = bases[1]; bases[1] = bases[0]; bases[0] = true;
+                log("Opponent singles." + (r ? " Run scores!" : ""), "log-bad");
+            } else if (result === "walk") {
+                log("Opponent draws a walk.", "log-bad");
+                if (bases[0] && bases[1] && bases[2]) { runs++; log("Run forced in!", "log-bad"); }
+                else { bases[2] = bases[1] && bases[0] ? true : bases[2]; bases[1] = bases[0] ? true : bases[1]; bases[0] = true; }
+            } else {
+                outs++;
+                log("Opponent out. (" + outs + " out" + (outs > 1 ? "s" : "") + ")", "");
+            }
+        }
+
+        state.oppScore += runs;
+        log("Opponent scores " + runs + " run(s) this inning. Total: " + state.oppScore, runs > 0 ? "log-bad" : "log-info");
+
+        state.half = "BOT";
+        state.outs = 0;
+        state.balls = 0;
+        state.strikes = 0;
+        state.bases = [false, false, false];
+        updateUI();
+
+        if (state.inning > 9) { endGame(); return; }
+        log("── Your turn to bat (Bottom of inning " + state.inning + ") ──", "log-info");
+    }
+
+    // ── Player Decision ──────────────────────────────────────
+    function decision(type) {
+        if (state.gameOver) return;
+        const b = state.roster[state.batterIndex];
+        let msg = "", resultType = "";
+
+        state.batterAB[state.batterIndex]++;
+
+        if (type === "pinch") {
+            if (state.pinchAvail.length === 0) { log("No pinch hitters available!", "log-bad"); state.batterAB[state.batterIndex]--; return; }
+            const ph = state.pinchAvail.shift();
+            state.roster[state.batterIndex] = ph;
+            state.batterAB.splice(state.batterIndex, 1, 0);
+            state.batterHits.splice(state.batterIndex, 1, 0);
+            log("Pinch hitter: " + ph.name + " steps up!", "log-info");
+            updateUI();
+            return;
+        }
+
+        const r = Math.random();
+
+        if (type === "swing") {
+            const result = atBatResult(b.avg, b.power);
+            if (result === "homerun") {
+                let runs = 1;
+                if (state.bases[2]) runs++;
+                if (state.bases[1]) runs++;
+                if (state.bases[0]) runs++;
+                state.myScore += runs;
+                state.bases = [false, false, false];
+                state.batterHits[state.batterIndex]++;
+                msg = "💥 HOME RUN by " + b.name + "! " + runs + " run(s) score!"; resultType = "log-good";
+            } else if (result === "triple") {
+                let runs = (state.bases[2] ? 1 : 0) + (state.bases[1] ? 1 : 0) + (state.bases[0] ? 1 : 0);
+                state.myScore += runs;
+                state.bases = [false, false, true];
+                state.batterHits[state.batterIndex]++;
+                msg = "🚀 Triple by " + b.name + "!" + (runs ? " " + runs + " run(s) score!" : ""); resultType = "log-good";
+            } else if (result === "double") {
+                let runs = (state.bases[2] ? 1 : 0) + (state.bases[1] ? 1 : 0);
+                state.myScore += runs;
+                state.bases[2] = state.bases[0]; state.bases[1] = true; state.bases[0] = false;
+                state.batterHits[state.batterIndex]++;
+                msg = "🎯 Double by " + b.name + "!" + (runs ? " " + runs + " run(s) score!" : ""); resultType = "log-good";
+            } else if (result === "single") {
+                let runs = state.bases[2] ? 1 : 0;
+                state.myScore += runs;
+                state.bases[2] = state.bases[1]; state.bases[1] = state.bases[0]; state.bases[0] = true;
+                state.batterHits[state.batterIndex]++;
+                msg = "✅ Single by " + b.name + "!" + (runs ? " Run scores!" : ""); resultType = "log-good";
+            } else if (result === "walk") {
+                msg = b.name + " draws a walk."; resultType = "";
+                if (state.bases[0] && state.bases[1] && state.bases[2]) { state.myScore++; msg += " Run forced in!"; resultType = "log-good"; }
+                else { state.bases[2] = (state.bases[1] && state.bases[0]) ? true : state.bases[2]; state.bases[1] = state.bases[0] ? true : state.bases[1]; state.bases[0] = true; }
+            } else if (result === "strikeout") {
+                state.strikes = 2; addStrike(); return;
+            } else {
+                addOut(b.name + " grounds out."); return;
+            }
+            nextBatter(msg, resultType);
+
+        } else if (type === "take") {
+            if (r < 0.45) {
+                state.balls++;
+                if (state.balls >= 4) {
+                    msg = b.name + " walks on 4 balls!";
+                    if (state.bases[0] && state.bases[1] && state.bases[2]) { state.myScore++; msg += " Run forced in!"; }
+                    else { state.bases[2] = (state.bases[1] && state.bases[0]) ? true : state.bases[2]; state.bases[1] = state.bases[0] ? true : state.bases[1]; state.bases[0] = true; }
+                    nextBatter(msg, "log-good");
+                } else {
+                    log("Ball " + state.balls + ". Count: " + state.balls + "-" + state.strikes, "");
+                    updateUI();
+                }
+            } else {
+                addStrike();
+            }
+            return;
+
+        } else if (type === "bunt") {
+            if (state.bases[0] || state.bases[1]) {
+                if (r < 0.65) {
+                    let runs = state.bases[2] ? 1 : 0;
+                    state.myScore += runs;
+                    state.bases[2] = state.bases[1]; state.bases[1] = state.bases[0]; state.bases[0] = false;
+                    msg = "📐 Successful bunt by " + b.name + "! Runners advance." + (runs ? " Run scores!" : ""); resultType = "log-good";
+                } else {
+                    addOut(b.name + " bunts into an out."); return;
+                }
+            } else {
+                msg = "No runners on — bunt doesn't make much sense, but " + b.name + " tries anyway...";
+                addOut(msg); return;
+            }
+            nextBatter(msg, resultType);
+
+        } else if (type === "steal") {
+            if (!state.bases[0] && !state.bases[1] && !state.bases[2]) {
+                log("No runners on base to steal!", "log-bad");
+                state.batterAB[state.batterIndex]--;
+                return;
+            }
+            if (r < 0.68) {
+                if (state.bases[0]) { state.bases[1] = true; state.bases[0] = false; msg = "💨 Stolen base! Runner advances to 2nd!"; }
+                else if (state.bases[1]) { state.bases[2] = true; state.bases[1] = false; msg = "💨 Stolen base! Runner advances to 3rd!"; }
+                else { state.myScore++; state.bases[2] = false; msg = "💨 Runner steals home! Run scores!"; }
+                resultType = "log-good";
+            } else {
+                msg = "Runner caught stealing! Out!"; resultType = "log-bad";
+                state.outs++;
+                if (state.bases[0]) state.bases[0] = false;
+                else if (state.bases[1]) state.bases[1] = false;
+                else state.bases[2] = false;
+                if (state.outs >= 3) { log(msg, resultType); endHalf(); return; }
+            }
+            state.batterAB[state.batterIndex]--;
+            log(msg, resultType);
+            updateUI();
+            return;
+
+        } else if (type === "hitrun") {
+            if (!state.bases[0]) { log("Need a runner on 1st for hit & run.", "log-bad"); state.batterAB[state.batterIndex]--; return; }
+            if (r < 0.50) {
+                let runs = state.bases[2] ? 1 : 0;
+                state.myScore += runs;
+                state.bases[2] = state.bases[1]; state.bases[1] = true; state.bases[0] = true;
+                msg = "🏃 Hit & Run works! " + b.name + " singles, runners move up!" + (runs ? " Run scores!" : ""); resultType = "log-good";
+                state.batterHits[state.batterIndex]++;
+                nextBatter(msg, resultType);
+            } else if (r < 0.75) {
+                msg = b.name + " hits into a double play on the hit & run!"; resultType = "log-bad";
+                state.outs += 2;
+                state.bases[0] = false;
+                if (state.outs >= 3) { log(msg, resultType); endHalf(); return; }
+                addOut(msg); return;
+            } else {
+                addOut(b.name + " swings and misses on hit & run — runner caught!"); 
+                state.bases[0] = false;
+                return;
+            }
+        }
+    }
+
+    function addStrike() {
+        state.strikes++;
+        if (state.strikes >= 3) {
+            addOut(state.roster[state.batterIndex].name + " strikes out!");
+        } else {
+            log("Strike " + state.strikes + ". Count: " + state.balls + "-" + state.strikes, "");
+            updateUI();
+        }
+    }
+
+    function addOut(msg) {
+        state.outs++;
+        log(msg + " (" + state.outs + " out" + (state.outs > 1 ? "s" : "") + ")", "log-bad");
+        if (state.outs >= 3) { endHalf(); return; }
+        state.strikes = 0; state.balls = 0;
+        state.batterIndex = (state.batterIndex + 1) % state.roster.length;
+        updateUI();
+    }
+
+    function nextBatter(msg, cls) {
+        log(msg, cls);
+        state.strikes = 0; state.balls = 0;
+        state.batterIndex = (state.batterIndex + 1) % state.roster.length;
+        updateUI();
+    }
+
+    function endHalf() {
+        state.outs = 0; state.balls = 0; state.strikes = 0;
+        state.bases = [false, false, false];
+
+        if (state.half === "BOT") {
+            // Check walk-off
+            if (state.inning >= 9 && state.myScore > state.oppScore) { endGame(); return; }
+            state.inning++;
+            if (state.inning > 9) { endGame(); return; }
+            state.half = "TOP";
+            updateUI();
+            setTimeout(simulateOpponentHalf, 600);
+        } else {
+            state.half = "BOT";
+            updateUI();
+            log("── Your turn to bat (Bottom of inning " + state.inning + ") ──", "log-info");
+        }
+    }
+
+    function endGame() {
+        state.gameOver = true;
+        setButtons(false);
+        const won = state.myScore > state.oppScore;
+        const tied = state.myScore === state.oppScore;
+        document.getElementById("overlay-title").textContent = won ? "You Win! 🏆" : tied ? "Tie Game!" : "You Lose!";
+        document.getElementById("overlay-msg").textContent   = "Final Score: You " + state.myScore + " — " + state.oppScore + " Opponent";
+        document.getElementById("overlay").classList.add("show");
+    }
+
+    function resetGame() {
+        document.getElementById("overlay").classList.remove("show");
+        document.getElementById("log-box").innerHTML = "";
+        initState();
+        setTimeout(simulateOpponentHalf, 500);
+    }
+
+    // ── Start ────────────────────────────────────────────────
+    initState();
+    setTimeout(simulateOpponentHalf, 600);
+</script>
+</body>
+</html>
